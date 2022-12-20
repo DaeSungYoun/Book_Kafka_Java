@@ -138,3 +138,32 @@
             bin/kafka-configs.sh --bootstrap-server my-kafka:9092 --entity-type topics --entity-name hello.kafka --alter --add-config retetion.ms=86400000
             ```
 ### 2.2.2 kafka-console-producer.sh
+* 레코드 전송
+    ```
+    bin/kafka-console-producer.sh --bootstrap-server my-kafka:9092 --topic hello.kafka --property "parse.key=true" --property "key.separator=:"
+    ```
+    * --property "parse.key=true"
+        * parse.key를 true로 설정하면 레코드 전송할 때 메시지 키를 추가할 수 있다.
+    * --property "key.separator=:"
+        * 메시지 키와 메시지 값을 구분하는 구분자를 선언
+        * key.separator를 선언하지 않으면 기본 설정은 Tab delimiter(\t)이다.
+        * key.separator로 사용하는 구분자를 넣지 않고 메시지를 보내면 KafkaException과 함께 종료됨
+* 토픽에 넣는 데이터는 레코드라고 부르며 메시지 키와 메시지 값으로 이루어져 있다.
+* kafkaa-console-producer.sh로 전송되는 레코드 값은 UTF-8을 기반으로 Byte로 변환되고 ByteArraySerializer로만 직렬화 된다
+* 즉, String이 아닌 타입으로는 직렬화 하여 전송할 수 없다.
+* 텍스트 목적으로 문자열만 전송할 수 있고, 다른 타입으로 직렬화하여 데이터를 브로커로 전송하고 싶다면 카프카 프로듀서 애플리케이션을 직접 개발해야한다. 
+* 메시지 키가 null인 경우에는 프로듀서가 파티션으로 전송할 때 레코드 배치단위(레코드 전송 묶음)로 라운드 로빈으로 전송
+* 메시지 키가 존재하는 경우에는 키의 해시값을 작성하여 존재하는 파티션중 한 개에 할당된다.
+    * 메시지 키가 동일한 경우에는 동일한 파티션으로 전송
+* 다만, 이런 메시지 키와 파티션 할당은 프로듀서에서 설정된 파티셔너에 의해 결정되는데, 기본 파티셔너의 경우 이와 같은 동작을 보장한다.
+* 커스텀 파티셔너를 사용할 경우에는 메시지 키에 따른 파티션 할당이 다르게 동작할 수도 있으니 참고
+> 파티션 개수가 늘어나면 새로 프로듀싱되는 레코드들은 어느 파티션으로 갈까?<br><br>
+메시지 키를 가진 레코드의 경우 파티션이 추가되면 파티션과 메시지 키의 일관성이 보장되지 않는다.<br>
+즉, 이전에 메시지 키가 파티션 0번에 들어갔었다면 파티션을 늘린 뒤에는 파티션 0번으로 간다는 보장이 없다.<br>
+만약 파티션을 추가하더라도 이전에 사용하던 메시지 키의 일관성을 보장하고 싶다면 커스텀 파티셔너를 만들어서 운영해야 한다.
+
+### 2.2.3 kafka-console-consumer.sh
+### 2.2.4 kafka-console-groups.sh
+### 2.2.5 kafka-verifiable-producer, consumer.sh
+### 2.2.4 kafka-delete-records.sh
+## 2.3 정리
