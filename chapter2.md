@@ -163,7 +163,65 @@
 만약 파티션을 추가하더라도 이전에 사용하던 메시지 키의 일관성을 보장하고 싶다면 커스텀 파티셔너를 만들어서 운영해야 한다.
 
 ### 2.2.3 kafka-console-consumer.sh
+* 토픽 데이터 가져오기
+    ```
+    bin/kafka-console-consumer.sh --bootstrap-server my-kafka:9092 --topic hello.kafka --from-beginning
+    ```
+    * --from-beginning
+        * 토픽에 저장된 가장 처음 데이터부터 출력
+    ```
+    bin/kafka-console-consumer.sh --bootstrap-server my-kafka:9092 --topic hello.kafka --property print.key=true --property key.separator="-" group hello-group --from-beginnig
+    ```
+    * --property print.key=true
+        * 메세지 키 확인, 기본설정값이 fasle이기 떄문에 true로 설정
+    * --property key.separator="-"
+        * 메시지 키 값을 구분하기 위해 설정
+    * --group
+        * 신규 컨슈머 그룹 생성. 컨슈머 그룹은 1개 이상의 컨슈머로 이루어져 있다.
+        * 이 컨슈머 그룹을 통해 가져간 토픽의 메시지는 가져간 메시지에 대해 커밋을 한다.
+        * 커밋이란 컨슈머가 특정 레코드까지 처리를 완료했다고 레코드의 오프셋 번호를 카프카 브로커에 저장하는 것.
+        * 커밋 정보는 _consumer_offsets 이름의 내부 토픽에 저장
+    * 순서
+        * 토픽에 넣은 데이터의 순서를 보장하고 싶다면 가장 좋은 방법은 파티션 1개로 구성된 토픽을 만드는 것이다
+        * 한 개의 파티션에서는 데이터의 순서를 보장하기 떄문이다.
 ### 2.2.4 kafka-console-groups.sh
+* 컨슈머 그룹 리스트 확인
+    ```
+    bin/kafka-consumer-groups.sh --bootstrap-server my-kafka:9092 --list
+    ```
+* 컨슈머 그룹 상세 조회
+    ```
+    bin/kafka-consumer-groups.sh --bootstrap-server my-kafka:9092 --group hello-group --describe
+    ```
+    * --group {값}
+        * --describe 옵션과 함께 사용되며 조회할 그룹명을 입력
+    * --describe
+        * 컨슈머 그룹의 상세 내용 확인
+    * p.57
 ### 2.2.5 kafka-verifiable-producer, consumer.sh
+* kafka-verifiable로 시작하는 2개의 스크립트를 사용하면 String 타입 메시지 값을 코드 없이 주고 받을 수 있다.
+    ```
+    bin/kafka-verifiable-producer.sh --bootstrap-server my-kafka:9092 --max-messages 10 --topic verify-test
+    ```
+    * --bootstrap-server {값}
+        * 통신하고자 하는 클러스터 호스트와 포트입력
+    * --max-messages {값}
+        * kafka-verifiable-producer.sh로 보내는 데이터 개수를 지정
+        * 만약 -1을 옵션값으로 입력하면 kafka-verifiable-producer.sh가 종료될 떄까지 계속 데이터를 토픽으로 보낸다.
+    * --topic {값}
+        * 데이터를 받을 대상 토픽 입력
+    ```
+    bin/kafka-verifiable-consumer.sh --bootstrap-server my-kafka:9092 --topic verify-test --group-id test-group
+    ```
+    * --bootstrap-server {값}
+        * 통신하고자 하는 클러스터 호스트와 포트입력
+    * --topic {값}
+        * 데이터를 가져오고자 하는 토픽 입력
+    * --group-id
+        * 컨슈머 그룹을 지정
 ### 2.2.4 kafka-delete-records.sh
-## 2.3 정리
+* 카프카에서는 토픽의 파티션에 저장된 특정 데이터만 삭제할 수는 없다.
+* 파티션에 존재하는 가장 오래된 오프셋부터 지정한 오프셋까지 삭제
+    ```
+    bin/kafka-delete-records.sh --bootstrap-server my-kafka:9092 --offset-json-file delete-topic.json
+    ```
